@@ -17,6 +17,10 @@ pids
 .env.test.local
 .env.production.local
 
+# Google Cloud Service Account
+google-service-account.json
+*.json
+
 # Logs
 logs
 *.log
