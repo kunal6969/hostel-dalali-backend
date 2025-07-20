@@ -39,8 +39,10 @@ const allowedOrigins = [
   process.env.FRONTEND_URL || 'http://localhost:3000',
   'http://localhost:3000',
   'http://localhost:5173', // Vite default port
+  'http://localhost:5175', // Current Vite port
   'http://127.0.0.1:3000',
-  'http://127.0.0.1:5173'
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5175'
 ];
 
 app.use(cors({
@@ -61,6 +63,8 @@ app.use(cors({
   exposedHeaders: ['Set-Cookie']
 }));
 
+// Explicit preflight handler for all routes
+app.options('*', cors());
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));

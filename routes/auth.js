@@ -41,9 +41,11 @@ const setAuthCookie = (res, token) => {
   try {
     res.cookie('authToken', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      secure: false, // Always false for development
+      sameSite: 'lax', // Use 'lax' for same-site development
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      path: '/', // Ensure cookie is available for all paths
+      domain: 'localhost' // Explicitly set domain for localhost
     });
     console.log('✅ Helper - Auth cookie set successfully');
   } catch (error) {

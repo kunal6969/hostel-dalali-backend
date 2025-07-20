@@ -71,7 +71,7 @@ const verifyOtpSchema = z.object({
 // Room listing validation schemas
 const roomLocationSchema = z.object({
   hostel: z.string().min(1, 'Hostel is required'),
-  block: z.string().min(1, 'Block is required'),
+  block: z.string().optional().default(''), // Allow empty block - will be processed by backend
   roomNumber: z.string().min(1, 'Room number is required'),
   type: z.enum(['Single', 'Double Shared', 'Triple Shared', 'Any'])
 });

@@ -22,8 +22,36 @@ const parseRoomNumber = (fullRoomNumber) => {
     return { block: match[1], roomNumber: match[2] };
   }
   
-  // Fallback - treat entire string as room number
+  // Fallback - treat entire string as room number with default block
   return { block: 'A', roomNumber: fullRoomNumber };
+};
+
+// Helper function to process room details - handles both single field and separate field formats
+const processRoomDetails = (roomDetails) => {
+  console.log('🔧 Helper - processRoomDetails called with:', roomDetails);
+  
+  // If block is provided and not empty, use it as-is
+  if (roomDetails.block && roomDetails.block.trim()) {
+    console.log('✅ Helper - Using provided block:', roomDetails.block);
+    return {
+      ...roomDetails,
+      block: roomDetails.block.trim(),
+      roomNumber: roomDetails.roomNumber.trim()
+    };
+  }
+  
+  // If block is empty, try to parse from roomNumber
+  console.log('🔧 Helper - Block is empty, parsing from room number:', roomDetails.roomNumber);
+  const { block, roomNumber } = parseRoomNumber(roomDetails.roomNumber);
+  
+  const result = {
+    ...roomDetails,
+    block: block || 'A', // Ensure block is never empty
+    roomNumber: roomNumber
+  };
+  
+  console.log('✅ Helper - Processed room details:', result);
+  return result;
 };
 
 /**
@@ -142,14 +170,8 @@ router.post('/', authenticateToken, validate(roomListingSchema), async (req, res
       allotmentProofType 
     } = req.validatedData;
 
-    // Parse the full room number
-    const { block, roomNumber } = parseRoomNumber(roomDetails.roomNumber);
-
-    const processedRoomDetails = {
-      ...roomDetails,
-      block,
-      roomNumber
-    };
+    // Process room details to handle both single field and separate field formats
+    const processedRoomDetails = processRoomDetails(roomDetails);
 
     // Check if user already has an active listing
     let existingListing = await RoomListing.findOne({
@@ -454,14 +476,8 @@ router.put('/:id', authenticateToken, validate(roomListingSchema), async (req, r
       });
     }
 
-    // Parse the full room number
-    const { block, roomNumber } = parseRoomNumber(roomDetails.roomNumber);
-
-    const processedRoomDetails = {
-      ...roomDetails,
-      block,
-      roomNumber
-    };
+    // Process room details to handle both single field and separate field formats
+    const processedRoomDetails = processRoomDetails(roomDetails);
 
     // Update listing fields
     listing.roomDetails = processedRoomDetails;
