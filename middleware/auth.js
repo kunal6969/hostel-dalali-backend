@@ -7,9 +7,11 @@ const authenticateToken = async (req, res, next) => {
     console.log('🔐 Auth middleware - Request path:', req.path);
     console.log('🔐 Auth middleware - Request method:', req.method);
     
-    // Get token from cookie
-    const token = req.cookies.authToken;
-    console.log('🔐 Auth middleware - Token present:', !!token);
+    // Get token from Authorization header
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null;
+    console.log('🔐 Auth middleware - Auth header present:', !!authHeader);
+    console.log('🔐 Auth middleware - Token extracted:', !!token);
 
     if (!token) {
       console.log('❌ Auth middleware - No token provided');
@@ -67,7 +69,8 @@ const authenticateToken = async (req, res, next) => {
 const optionalAuth = async (req, res, next) => {
   try {
     console.log('🔓 Optional auth middleware - Starting check');
-    const token = req.cookies.authToken;
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null;
     console.log('🔓 Optional auth middleware - Token present:', !!token);
 
     if (token) {

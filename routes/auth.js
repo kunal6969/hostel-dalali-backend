@@ -35,25 +35,6 @@ const generateToken = (userId) => {
   }
 };
 
-// Helper function to set auth cookie
-const setAuthCookie = (res, token) => {
-  console.log('🔧 Helper - setAuthCookie called');
-  try {
-    res.cookie('authToken', token, {
-      httpOnly: true,
-      secure: false, // Always false for development
-      sameSite: 'lax', // Use 'lax' for same-site development
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      path: '/', // Ensure cookie is available for all paths
-      domain: 'localhost' // Explicitly set domain for localhost
-    });
-    console.log('✅ Helper - Auth cookie set successfully');
-  } catch (error) {
-    console.error('❌ Helper - Failed to set auth cookie:', error.message);
-    throw error;
-  }
-};
-
 /**
  * @route   POST /api/auth/register
  * @desc    Register a new user
@@ -143,11 +124,10 @@ router.post('/register', validate(registerSchema), async (req, res, next) => {
     otpService.clearOTP(email);
     console.log('✅ POST /api/auth/register - OTP cleared');
 
-    // Generate token and set cookie for automatic login
-    console.log('👤 POST /api/auth/register - Generating JWT token and setting cookie');
+    // Generate JWT token for automatic login
+    console.log('👤 POST /api/auth/register - Generating JWT token');
     const token = generateToken(user._id);
-    setAuthCookie(res, token);
-    console.log('✅ POST /api/auth/register - JWT token set in cookie');
+    console.log('✅ POST /api/auth/register - JWT token generated successfully');
 
     // Send welcome email (optional, separate from OTP)
     console.log('👤 POST /api/auth/register - Attempting to send welcome email');
@@ -159,13 +139,14 @@ router.post('/register', validate(registerSchema), async (req, res, next) => {
       // Don't fail registration if welcome email fails
     }
 
-    // Return success response in new format
+    // Return success response with token
     console.log('✅ POST /api/auth/register - Registration completed successfully');
     res.status(201).json({
       success: true,
       message: 'User registered successfully',
       data: {
         user: user.toJSON(),
+        token: token,
         autoLogin: true
       }
     });
@@ -319,9 +300,8 @@ router.post('/verifyOtpForSignup', validate(verifyOtpSchema), async (req, res) =
       // Clear OTP after successful registration
       otpService.clearOTP(email);
 
-      // Generate token and set cookie for automatic login
+      // Generate JWT token for automatic login
       const token = generateToken(user._id);
-      setAuthCookie(res, token);
 
       // Send welcome email
       try {
@@ -335,6 +315,7 @@ router.post('/verifyOtpForSignup', validate(verifyOtpSchema), async (req, res) =
         message: 'OTP verified and user registered successfully',
         data: {
           user: user.toJSON(),
+          token: token,
           autoLogin: true
         }
       });
@@ -412,15 +393,15 @@ router.post('/test-register', validate(registerSchema), async (req, res, next) =
 
     await user.save();
 
-    // Generate token and set cookie for automatic login
+    // Generate JWT token for automatic login
     const token = generateToken(user._id);
-    setAuthCookie(res, token);
 
     res.status(201).json({
       success: true,
       message: 'Test user registered and verified successfully',
       data: {
         user: user.toJSON(),
+        token: token,
         autoVerified: true
       }
     });
@@ -484,18 +465,16 @@ router.post('/login', validate(loginSchema), async (req, res, next) => {
     // Generate token
     console.log('🔐 POST /api/auth/login - Generating JWT token');
     const token = generateToken(user._id);
+    console.log('✅ POST /api/auth/login - JWT token generated successfully');
 
-    // Set cookie
-    console.log('🔐 POST /api/auth/login - Setting authentication cookie');
-    setAuthCookie(res, token);
-
-    // Return user data (password is automatically excluded by toJSON transform)
+    // Return user data and token (password is automatically excluded by toJSON transform)
     console.log('✅ POST /api/auth/login - Login completed successfully for user:', email);
     res.json({
       success: true,
       message: 'Login successful',
       data: {
-        user: user.toJSON()
+        user: user.toJSON(),
+        token: token
       }
     });
 
@@ -507,14 +486,16 @@ router.post('/login', validate(loginSchema), async (req, res, next) => {
 
 /**
  * @route   POST /api/auth/logout
- * @desc    Logout user
+ * @desc    Logout user (client-side token removal)
  * @access  Public
  */
 router.post('/logout', (req, res) => {
-  res.clearCookie('authToken');
+  // With JWT tokens in headers, logout is handled client-side
+  // Server doesn't need to do anything except confirm logout
+  console.log('🔐 POST /api/auth/logout - Logout requested');
   res.json({
     success: true,
-    message: 'Logout successful'
+    message: 'Logout successful - please remove token from client storage'
   });
 });
 
@@ -610,9 +591,8 @@ router.post('/verify-email', async (req, res, next) => {
     user.emailVerifiedAt = new Date();
     await user.save();
 
-    // Generate token and set cookie for automatic login
+    // Generate JWT token for automatic login
     const token = generateToken(user._id);
-    setAuthCookie(res, token);
 
     // Send welcome email
     await emailService.sendWelcomeEmail(email, user.fullName);
@@ -622,6 +602,7 @@ router.post('/verify-email', async (req, res, next) => {
       message: 'Email verified successfully! Welcome to MNIT Live.',
       data: {
         user: user.toJSON(),
+        token: token,
         verified: true
       }
     });

@@ -18,7 +18,7 @@ const errorHandler = require('./middleware/errorHandler');
 const { authenticateToken } = require('./middleware/auth');
 
 const app = express();
-const PORT = process.env.PORT || 5001; // Changed to 5001 to avoid conflicts
+const PORT = process.env.PORT || 5001; // Port 5001 for backend
 
 // Security middleware
 app.use(helmet());
@@ -57,12 +57,11 @@ app.use(cors({
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true, // Enable credentials (cookies, authorization headers)
+  credentials: false, // No longer needed since we're not using cookies
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
-  exposedHeaders: ['Set-Cookie']
+  allowedHeaders: ['Content-Type', 'Authorization'], // Removed Cookie, added Authorization
+  exposedHeaders: ['Authorization'] // Expose Authorization header if needed
 }));
-
 // Explicit preflight handler for all routes
 app.options('*', cors());
 
@@ -78,7 +77,6 @@ app.use((req, res, next) => {
   console.log(`🔍 Headers:`, JSON.stringify({
     'content-type': req.headers['content-type'],
     'authorization': req.headers['authorization'] ? 'Bearer ***' : 'None',
-    'cookie': req.headers.cookie ? 'Present' : 'None',
     'origin': req.headers.origin,
     'user-agent': req.headers['user-agent']?.substring(0, 50) + '...'
   }, null, 2));
